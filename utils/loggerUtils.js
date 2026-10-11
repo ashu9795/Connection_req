@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import config from '../config/configuration.json' with { type: 'json' };
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const logDir = path.resolve(currentDir, '../logger');
@@ -17,8 +18,8 @@ function safeFileName(name) {
         .slice(0, 100);
 }
 
-export function createLogger(testInfo, page, { enabled = true } = {}) {
-    if (!enabled) {
+export function createLogger(testInfo, page) {
+    if (!config.ENABLE_LOGGER) {
         return {
             info() {},
             warn() {},
@@ -30,12 +31,8 @@ export function createLogger(testInfo, page, { enabled = true } = {}) {
 
     fs.mkdirSync(logDir, { recursive: true });
 
-    const date = new Date();
-    const dateTime = date.toISOString().replace(/[:.]/g, '-');
-
-    const fileName =
-        `${safeFileName(testInfo.title)}_${dateTime}.log`;
-
+    const dateTime = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `${safeFileName(testInfo.title)}_${dateTime}.log`;
     const filePath = path.join(logDir, fileName);
 
     function write(level, message) {
@@ -47,9 +44,13 @@ export function createLogger(testInfo, page, { enabled = true } = {}) {
 
     write('INFO', `TEST STARTED: ${testInfo.title}`);
 
-    // Log API responses and their HTTP status codes.
+    const isApiRequest = (request) =>
+        ['xhr', 'fetch'].includes(request.resourceType());
+
     const onResponse = (response) => {
         const request = response.request();
+
+        if (!isApiRequest(request)) return;
 
         write(
             'API',
@@ -57,16 +58,21 @@ export function createLogger(testInfo, page, { enabled = true } = {}) {
         );
     };
 
-    // Log failed network requests.
     const onRequestFailed = (request) => {
+        if (!isApiRequest(request)) return;
+
         write(
-            'ERROR',
-            `REQUEST FAILED: ${request.method()} ${request.url()} | ${request.failure()?.errorText ?? 'Unknown error'}`
+            'API',
+            `REQUEST FAILED: ${request.method()} ${request.url()} | ${
+                request.failure()?.errorText ?? 'Unknown error'
+            }`
         );
     };
 
-    page.on('response', onResponse);
-    page.on('requestfailed', onRequestFailed);
+    if (config.API_CALL_LOGGER) {
+        page.on('response', onResponse);
+        page.on('requestfailed', onRequestFailed);
+    }
 
     return {
         info(message) {
@@ -86,8 +92,11 @@ export function createLogger(testInfo, page, { enabled = true } = {}) {
         },
 
         close() {
-            page.off('response', onResponse);
-            page.off('requestfailed', onRequestFailed);
+            if (config.API_CALL_LOGGER) {
+                page.off('response', onResponse);
+                page.off('requestfailed', onRequestFailed);
+            }
+
             write('INFO', 'LOGGER CLOSED');
         },
 

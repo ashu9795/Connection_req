@@ -1,9 +1,19 @@
-
 # Playwright
 node_modules/
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
-/logger
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+playwright/.auth/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logger/
+*.log
+
+# Generated files
+coverage/

@@ -1,5 +1,6 @@
 
 {
-  "KEEP_BROWSER_OPEN": false,
-  "ENABLE_LOGGER": true
+  "KEEP_BROWSER_OPEN": true,
+  "ENABLE_LOGGER": true,
+  "API_CALL_LOGGER": false
 }
