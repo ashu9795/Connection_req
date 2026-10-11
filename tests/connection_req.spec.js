@@ -1,13 +1,33 @@
 
 import { test, expect } from '@playwright/test';
 import { shouldKeepBrowserOpen } from '../utils/isCloseBrowser.js';
-const KEEP_BROWSER_OPEN = false; 
+import { createLogger } from '../utils/loggerUtils.js';
+import config from '../config/configuration.json' with { type: 'json' };
 
-test('open Google Chrome', async ({ page }) => {
-    await page.goto('https://www.google.com');
+test('open Google Chrome', async ({ page }, testInfo) => {
+    const logger = createLogger(testInfo, page, {
+        enabled: config.ENABLE_LOGGER,
+    });
 
-    await expect(page).toHaveTitle(/Google/);
-    if (shouldKeepBrowserOpen(KEEP_BROWSER_OPEN)) {
-        await page.pause();
+    try {
+        logger.info('Opening Google Chrome');
+
+        await page.goto('https://www.google.com');
+
+        logger.info('Navigated to Google');
+
+        await expect(page).toHaveTitle(/Google/);
+
+        logger.info('Page title verified successfully');
+
+        if (shouldKeepBrowserOpen(config.KEEP_BROWSER_OPEN)) {
+            logger.info('Pausing browser for inspection');
+            await page.pause();
+        }
+    } catch (error) {
+        logger.error(`Test failed: ${error.message}`);
+        throw error;
+    } finally {
+        logger.close();
     }
 });
