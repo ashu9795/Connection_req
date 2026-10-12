@@ -1,19 +1,26 @@
-
-import { test } from '@playwright/test';
-import 'dotenv/config';
+import { test, expect } from '@playwright/test';
 import { openLinkedIn } from '../utils/loginUtils.js';
-import { connectToExistingChrome } from '../functions/connectToExistingChrome.js';
-import { createLogger } from '../utils/loggerUtils.js';
-const linkedinUrl = process.env.LINKEDIN_URL_LOGIN;
+import { discoverPeople } from '../functions/discoverPeople.js';
 
 
+test('Discover LinkedIn candidates and send requests', async ({ page }, testInfo) => {
+    test.setTimeout(300000);
 
-
-test('Open LinkedIn', async ({ page }, testInfo) => {
     await openLinkedIn(page, testInfo);
+    await page.waitForTimeout(5000);
+
+    const { candidates, sent, skipped } = await discoverPeople(
+        page,
+        testInfo,
+        'Oracle'
+    );
+
+    expect(Array.isArray(candidates)).toBe(true);
+
+    console.log(`Candidates: ${candidates.length}`);
+    console.log(`Sent: ${sent.length}`, sent);
+    console.log(`Skipped: ${skipped.length}`, skipped);
 });
-
-
 // test('Open LinkedIn in existing Chrome', async () => {
 //     const { page } = await connectToExistingChrome();
 

@@ -12,6 +12,7 @@ playwright/.auth/
 !.env.example
 
 # Logs
+output/
 logger/
 *.log
 

@@ -1,7 +1,7 @@
 {
   "name": "connection_req",
   "version": "1.0.0",
-   "type": "module",
+  "type": "module",
   "main": "index.js",
   "scripts": {},
   "keywords": [],
@@ -11,5 +11,9 @@
   "devDependencies": {
     "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.5"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.7",
+    "exceljs": "^4.4.0"
   }
 }
