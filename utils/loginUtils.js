@@ -5,7 +5,7 @@ import { createLogger } from './loggerUtils.js';
 import config from '../config/configuration.json' with { type: 'json' };
 
 const username = process.env.USER_NAME;
-const linkedinUrl = process.env.LINKEDIN_URL;
+const linkedinLoginUrl = process.env.LINKEDIN_URL_LOGIN;
 const password = process.env.USER_PASSWORD;
 
 export async function openLinkedIn(page, testInfo) {
@@ -22,16 +22,16 @@ export async function openLinkedIn(page, testInfo) {
     });
 
     try {
-        if (!username || !password || !linkedinUrl) {
+        if (!username || !password || !linkedinLoginUrl) {
             throw new Error(
                 'Missing required environment variables: ' +
-                'USER_NAME, USER_PASSWORD, or LINKEDIN_URL'
+                'USER_NAME, USER_PASSWORD, or LINKEDIN_URL_LOGIN'
             );
         }
 
         logger.info('Opening LinkedIn');
 
-        await page.goto(linkedinUrl, {
+        await page.goto(linkedinLoginUrl, {
             waitUntil: 'domcontentloaded',
         });
 
