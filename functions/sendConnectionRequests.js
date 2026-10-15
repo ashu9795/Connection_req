@@ -43,12 +43,28 @@ async function sendOne(page, name, logger) {
 }
 
 export async function sendConnectionRequests(page, logger, names) {
-    const summary = { sent: [], skipped: [] };
+    const summary = { sent: [], skipped: [], limitReached: false };
 
     for (const name of names) {
-        const status = await sendOne(page, name, logger);
+        let status;
 
-        if (status === 'limit') break;
+        try {
+            status = await sendOne(page, name, logger);
+        } catch (error) {
+            logger.error(
+                `Failed to send to ${name}: ${
+                    error instanceof Error ? error.message : String(error)
+                }`
+            );
+            await page.keyboard.press('Escape').catch(() => {});
+            status = 'skipped';
+        }
+
+        if (status === 'limit') {
+            summary.limitReached = true;
+            break;
+        }
+
         if (status === 'sent') summary.sent.push(name);
         else summary.skipped.push(name);
 

@@ -3,6 +3,6 @@
   "KEEP_BROWSER_OPEN": false,
   "ENABLE_LOGGER": true,
   "API_CALL_LOGGER": false,
-  "MAX_LOG_FILES": 2,
+  "MAX_LOG_FILES": 1,
   "MAX_CONNECTIONS_TO_REVIEW": 2
 }

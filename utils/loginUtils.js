@@ -8,18 +8,22 @@ const username = process.env.USER_NAME;
 const linkedinLoginUrl = process.env.LINKEDIN_URL_LOGIN;
 const password = process.env.USER_PASSWORD;
 
-export async function openLinkedIn(page, testInfo) {
+
+export async function openLinkedIn(page, testInfo, sharedLogger)  {
     const keepBrowserOpen = shouldKeepBrowserOpen(
         config.KEEP_BROWSER_OPEN
     );
+    const ownsLogger = !sharedLogger;
 
     if (keepBrowserOpen) {
         testInfo.setTimeout(0);
     }
 
-    const logger = createLogger(testInfo, page, {
-        enabled: config.ENABLE_LOGGER,
-    });
+
+
+const logger = sharedLogger ?? createLogger(testInfo, page, {
+    enabled: config.ENABLE_LOGGER,
+});
 
     try {
         if (!username || !password || !linkedinLoginUrl) {
@@ -91,6 +95,8 @@ export async function openLinkedIn(page, testInfo) {
 
         throw error;
     } finally {
+    if (ownsLogger) {
         logger.close();
     }
+}
 }
