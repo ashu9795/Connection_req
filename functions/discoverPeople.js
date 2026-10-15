@@ -1,6 +1,31 @@
 import { sendConnectionRequests } from './sendConnectionRequests.js';
 import { exportToExcel } from './exportToExcel.js';
 
+async function loadMoreResults(page, inviteLinks) {
+    const before = await inviteLinks.count();
+
+    if (before > 0) {
+        await inviteLinks.last().scrollIntoViewIfNeeded().catch(() => {});
+    }
+
+    await page.mouse.move(640, 400);
+    await page.mouse.wheel(0, 1200);
+
+    const deadline = Date.now() + 5000;
+
+    while (Date.now() < deadline) {
+        await page.waitForTimeout(500);
+
+        if ((await inviteLinks.count()) > before) {
+            return true;
+        }
+
+        await page.mouse.wheel(0, 600);
+    }
+
+    return false;
+}
+
 export async function discoverPeople(page, logger, companyName, maxCandidates) {
     if (typeof companyName !== 'string' || !companyName.trim()) {
         throw new Error('Please provide a valid company name.');
@@ -31,23 +56,19 @@ export async function discoverPeople(page, logger, companyName, maxCandidates) {
         .catch(() => {});
 
     const candidates = new Set();
-    const maxScrollRounds = 8;
+    const maxScrollRounds = 12;
     let staleRounds = 0;
 
     for (let round = 0; round < maxScrollRounds; round++) {
         const linkCount = await inviteLinks.count();
-        const sizeBefore = candidates.size;
 
         logger.info(`Search results round ${round + 1}: ${linkCount} invitation links`);
 
         for (let i = 0; i < linkCount; i++) {
-            const link = inviteLinks.nth(i);
-
-            if (!(await link.isVisible().catch(() => false))) {
-                continue;
-            }
-
-            const label = await link.getAttribute('aria-label');
+            const label = await inviteLinks
+                .nth(i)
+                .getAttribute('aria-label', { timeout: 2000 })
+                .catch(() => null);
 
             if (label) {
                 const name = label
@@ -69,27 +90,21 @@ export async function discoverPeople(page, logger, companyName, maxCandidates) {
             break;
         }
 
-        if (candidates.size === sizeBefore) {
+        const loadedMore = await loadMoreResults(page, inviteLinks);
+
+        if (!loadedMore) {
             staleRounds++;
+
             if (staleRounds >= 2) {
-                logger.info('No new candidates after scrolling. Stopping.');
+                logger.info('No more results are loading. Stopping.');
                 break;
             }
         } else {
             staleRounds = 0;
         }
-
-        await page.evaluate(() => {
-            window.scrollBy({
-                top: Math.floor(window.innerHeight * 0.75),
-                behavior: 'instant',
-            });
-        });
-
-        await page.waitForTimeout(1000);
     }
 
-    const results = [...candidates];
+    const results = [...candidates].slice(0, maxCandidates);
 
     logger.info(`Discovery completed: ${results.length} candidates`);
 

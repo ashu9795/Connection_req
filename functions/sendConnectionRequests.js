@@ -12,7 +12,8 @@ async function sendOne(page, name, logger) {
         return 'skipped';
     }
 
-    await inviteLink.scrollIntoViewIfNeeded();
+   await inviteLink.scrollIntoViewIfNeeded();
+await page.waitForTimeout(400);
     await inviteLink.click();
 
     const limitDialog = page.getByText(/weekly invitation limit/i);
